@@ -213,6 +213,25 @@
       <default>true</default>
       <summary>Whether to ring the terminal bell</summary>
     </key>
+    <key name="highlight-on-bell" type="b">
+      <default>true</default>
+      <summary>Whether to flash the window icon and bold the tab when the terminal emits a bell</summary>
+      <description>
+        If true, the X urgency hint will be set on the window
+                and the tab's title will be made bold when the terminal
+                emits a bell.
+      </description>
+    </key>
+    <key name="highlight-focused-on-bell" type="b">
+      <default>true</default>
+      <summary>Whether to highlight the tab and flash the window icon when the terminal emits a bell even if the tab is focused</summary>
+      <description>
+        If true and the GNOME Terminal window doesn't have the
+                focus, the X urgency hint will be set on the window.
+                If true and the GNOME Terminal tab doesn't have the
+                focus, the tab's title will made bold.
+      </description>
+    </key>
     <key name="word-char-exceptions" type="ms">
       <default>nothing</default>
       <summary>List of ASCII punctuation characters that are not to be treated as part of a word when doing word-wise selection</summary>

@@ -69,6 +69,7 @@ struct _TerminalScreenClass
                                int flavor,
                                guint state);
   void (* close_screen)       (TerminalScreen *screen);
+  void (* bell_raised_handler)(TerminalScreen *screen);
 };
 
 GType terminal_screen_get_type (void) G_GNUC_CONST;
@@ -133,6 +134,11 @@ void terminal_screen_save_config (TerminalScreen *screen,
 gboolean terminal_screen_has_foreground_process (TerminalScreen *screen,
                                                  char           **process_name,
                                                  char           **cmdline);
+
+gboolean terminal_screen_get_bell_raised (TerminalScreen *screen);
+void terminal_screen_set_bell_raised (TerminalScreen *screen,
+                                          gboolean raised);
+
 
 /* Allow scales a bit smaller and a bit larger than the usual pango ranges */
 #define TERMINAL_SCALE_XXX_SMALL   (PANGO_SCALE_XX_SMALL/1.2)

@@ -107,6 +107,7 @@ struct _TerminalScreenPrivate
   gboolean exec_on_realize;
   guint idle_exec_source;
   ExecData *exec_data;
+  gboolean bell_raised;
 };
 
 enum
@@ -122,6 +123,7 @@ enum {
   PROP_0,
   PROP_PROFILE,
   PROP_TITLE,
+  PROP_BELL_RAISED,
 };
 
 enum
@@ -156,6 +158,11 @@ static void terminal_screen_child_exited  (VteTerminal *terminal,
 
 static void terminal_screen_window_title_changed      (VteTerminal *vte_terminal,
                                                        TerminalScreen *screen);
+
+static gboolean terminal_screen_bell_cb (TerminalScreen *screen);
+static gboolean terminal_screen_focus_cb (TerminalScreen *screen);
+static gboolean terminal_screen_focus_in_event_cb (TerminalScreen *screen);
+static gboolean terminal_screen_key_press_event_cb (TerminalScreen *screen);
 
 static void update_color_scheme                      (TerminalScreen *screen);
 
@@ -547,6 +554,19 @@ terminal_screen_init (TerminalScreen *screen)
   g_signal_connect (terminal_app_get_desktop_interface_settings (app), "changed::" MONOSPACE_FONT_KEY_NAME,
                     G_CALLBACK (terminal_screen_system_font_changed_cb), screen);
 
+  g_signal_connect (screen, "bell",
+                    G_CALLBACK (terminal_screen_bell_cb),
+                    NULL);
+  g_signal_connect (screen, "focus",
+                    G_CALLBACK (terminal_screen_focus_cb),
+                    NULL);
+  g_signal_connect (screen, "focus-in-event",
+                    G_CALLBACK (terminal_screen_focus_in_event_cb),
+                    NULL);
+  g_signal_connect (screen, "key-press-event",
+                    G_CALLBACK (terminal_screen_key_press_event_cb),
+                    NULL);
+
 #ifdef ENABLE_DEBUG
   _TERMINAL_DEBUG_IF (TERMINAL_DEBUG_GEOMETRY)
     {
@@ -572,6 +592,10 @@ terminal_screen_get_property (GObject *object,
       case PROP_TITLE:
         g_value_set_string (value, terminal_screen_get_title (screen));
         break;
+      case PROP_BELL_RAISED:
+        g_value_set_boolean (value, terminal_screen_get_bell_raised (screen));
+        break;
+
       default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -593,6 +617,9 @@ terminal_screen_set_property (GObject *object,
         break;
       case PROP_TITLE:
         /* not writable */
+      case PROP_BELL_RAISED:
+        terminal_screen_set_bell_raised (screen, g_value_get_boolean (value));
+        break;
       default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -676,6 +703,13 @@ terminal_screen_class_init (TerminalScreenClass *klass)
                           NULL,
                           G_PARAM_READABLE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB));
 
+  g_object_class_install_property
+    (object_class,
+     PROP_BELL_RAISED,
+     g_param_spec_boolean ("bell-raised", NULL, NULL,
+                           FALSE,
+                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB));
+
   g_type_class_add_private (object_class, sizeof (TerminalScreenPrivate));
 
   n_url_regexes = G_N_ELEMENTS (url_regex_patterns);
@@ -758,6 +792,37 @@ terminal_screen_finalize (GObject *object)
 
   G_OBJECT_CLASS (terminal_screen_parent_class)->finalize (object);
 }
+
+gboolean
+terminal_screen_bell_cb (TerminalScreen *screen)
+{
+  g_object_set (screen, "bell-raised", TRUE, NULL);
+  return FALSE;
+}
+
+/* The user switched to this tab... */
+gboolean
+terminal_screen_focus_cb (TerminalScreen *screen)
+{
+  g_object_set (screen, "bell-raised", FALSE, NULL);
+  return FALSE;
+}
+
+/* The user switched to the parent window and this tab was the active one... */
+gboolean
+terminal_screen_focus_in_event_cb (TerminalScreen *screen)
+{
+  g_object_set (screen, "bell-raised", FALSE, NULL);
+  return FALSE;
+}
+
+gboolean
+terminal_screen_key_press_event_cb (TerminalScreen *screen)
+{
+  g_object_set (screen, "bell-raised", FALSE, NULL);
+  return FALSE;
+}
+
 
 TerminalScreen *
 terminal_screen_new (GSettings       *profile,
@@ -2316,3 +2381,17 @@ terminal_screen_get_uuid (TerminalScreen *screen)
 
   return screen->priv->uuid;
 }
+
+gboolean
+terminal_screen_get_bell_raised (TerminalScreen *screen)
+{
+  return screen->priv->bell_raised;
+}
+
+void
+terminal_screen_set_bell_raised (TerminalScreen *screen,
+                                 gboolean raised)
+{
+  screen->priv->bell_raised = raised;
+}
+

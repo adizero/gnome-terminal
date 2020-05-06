@@ -1376,6 +1376,16 @@ profile_prefs_load (const char *uuid, GSettings *profile)
                                "active",
                                G_SETTINGS_BIND_GET | G_SETTINGS_BIND_SET);
 
+  profile_prefs_settings_bind (profile, TERMINAL_PROFILE_HIGHLIGHT_ON_BELL_KEY,
+                               gtk_builder_get_object (builder, "highlight-on-bell-checkbutton"),
+                               "active",
+                               G_SETTINGS_BIND_GET | G_SETTINGS_BIND_SET);
+
+  profile_prefs_settings_bind (profile, TERMINAL_PROFILE_HIGHLIGHT_FOCUSED_ON_BELL_KEY,
+                               gtk_builder_get_object (builder, "highlight-focused-on-bell-checkbutton"),
+                               "active",
+                               G_SETTINGS_BIND_GET | G_SETTINGS_BIND_SET);
+
   profile_prefs_settings_bind (profile,
                                TERMINAL_PROFILE_USE_CUSTOM_COMMAND_KEY,
                                gtk_builder_get_object (builder, "custom-command-entry-label"),

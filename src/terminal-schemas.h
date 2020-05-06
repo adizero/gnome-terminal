@@ -31,6 +31,8 @@ G_BEGIN_DECLS
 #define TERMINAL_PROFILES_LIST_SCHEMA   "org.gnome.Terminal.ProfilesList"
 
 #define TERMINAL_PROFILE_AUDIBLE_BELL_KEY               "audible-bell"
+#define TERMINAL_PROFILE_HIGHLIGHT_ON_BELL_KEY          "highlight-on-bell"
+#define TERMINAL_PROFILE_HIGHLIGHT_FOCUSED_ON_BELL_KEY  "highlight-focused-on-bell"
 #define TERMINAL_PROFILE_BOLD_IS_BRIGHT_KEY             "bold-is-bright"
 #define TERMINAL_PROFILE_BACKGROUND_COLOR_KEY           "background-color"
 #define TERMINAL_PROFILE_BACKSPACE_BINDING_KEY          "backspace-binding"

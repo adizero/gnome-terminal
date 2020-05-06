@@ -25,6 +25,7 @@
 #include "terminal-intl.h"
 #include "terminal-tab-label.h"
 #include "terminal-icon-button.h"
+#include "terminal-schemas.h"
 #include "terminal-window.h"
 
 #define TERMINAL_TAB_LABEL_GET_PRIVATE(tab_label)(G_TYPE_INSTANCE_GET_PRIVATE ((tab_label), TERMINAL_TYPE_TAB_LABEL, TerminalTabLabelPrivate))
@@ -90,6 +91,32 @@ sync_tab_label (TerminalScreen *screen,
   if (window != NULL)
     terminal_window_update_size (window);
 }
+
+static void
+screen_bell_raised_tab_label_cb (TerminalScreen *screen,
+                                 GParamSpec *pspec,
+                                 TerminalTabLabel *tab_label)
+{
+  gboolean bell_raised;
+
+  g_object_get (screen, "bell-raised", &bell_raised, NULL);
+
+  if (bell_raised)
+    {
+      gboolean screen_has_focus;
+      gboolean highlight_focused;
+
+      g_object_get (screen, "has-focus", &screen_has_focus, NULL);
+      highlight_focused = g_settings_get_boolean (terminal_screen_get_profile (screen),
+                                                  TERMINAL_PROFILE_HIGHLIGHT_FOCUSED_ON_BELL_KEY);
+
+      if (!screen_has_focus || highlight_focused)
+        terminal_tab_label_set_bold (tab_label, TRUE);
+    }
+  else
+    terminal_tab_label_set_bold (tab_label, FALSE);
+}
+
 
 static void
 notify_tab_pos_cb (GtkNotebook *notebook,
@@ -211,9 +238,14 @@ terminal_tab_label_constructed (GObject *object)
                     G_CALLBACK (sync_tab_label), label);
 
   g_signal_connect (close_button, "clicked",
-		    G_CALLBACK (close_button_clicked_cb), tab_label);
+                    G_CALLBACK (close_button_clicked_cb), tab_label);
+
+  g_signal_connect (priv->screen, "notify::bell-raised",
+                    G_CALLBACK (screen_bell_raised_tab_label_cb), tab_label);
 
   gtk_widget_show_all (hbox);
+
+  terminal_tab_label_set_bold(tab_label, TRUE);
 }
 
 static void
@@ -360,7 +392,7 @@ terminal_tab_label_set_bold (TerminalTabLabel *tab_label,
   }
 
   if (bold)
-    weight_attr = pango_attr_weight_new (PANGO_WEIGHT_BOLD);
+    weight_attr = pango_attr_weight_new (PANGO_WEIGHT_ULTRABOLD);
   else
     weight_attr = pango_attr_weight_new (PANGO_WEIGHT_NORMAL);
 

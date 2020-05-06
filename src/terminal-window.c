@@ -1837,6 +1837,51 @@ screen_close_cb (TerminalScreen *screen,
 }
 
 static void
+screen_bell_raised_window_cb (TerminalScreen *screen,
+                              GParamSpec *pspec,
+                              TerminalWindow *window)
+{
+  gboolean bell_raised;
+
+  g_object_get (screen, "bell-raised", &bell_raised, NULL);
+  if (bell_raised)
+    {
+      gboolean should_highlight;
+
+      should_highlight = g_settings_get_boolean (terminal_screen_get_profile (screen),
+                                                 TERMINAL_PROFILE_HIGHLIGHT_ON_BELL_KEY);
+
+      if (should_highlight)
+        {
+          gboolean has_toplevel_focus;
+          gboolean highlight_focused;
+
+          g_object_get (window,
+                        "has-toplevel-focus", &has_toplevel_focus,
+                        NULL);
+
+          highlight_focused = g_settings_get_boolean (terminal_screen_get_profile (screen),
+                                                      TERMINAL_PROFILE_HIGHLIGHT_FOCUSED_ON_BELL_KEY);
+
+          if (!has_toplevel_focus || highlight_focused)
+            gtk_window_set_urgency_hint (GTK_WINDOW (window), TRUE);
+        }
+    }
+  else
+    {
+      gtk_window_set_urgency_hint (GTK_WINDOW (window), FALSE);
+    }
+}
+
+static gboolean
+terminal_window_focus_cb (TerminalWindow *window)
+{
+  gtk_window_set_urgency_hint (GTK_WINDOW (window), FALSE);
+  return FALSE;
+}
+
+
+static void
 notebook_update_tabs_menu_cb (GtkMenuButton *button,
                               TerminalWindow *window)
 {
@@ -2228,6 +2273,10 @@ terminal_window_init (TerminalWindow *window)
                     G_CALLBACK (clipboard_targets_changed_cb), window);
 
   terminal_window_fill_notebook_action_box (window, !use_headerbar);
+
+  g_signal_connect (window, "focus-in-event",
+                    G_CALLBACK (terminal_window_focus_cb), NULL);
+
 
   /* We have to explicitly call this, since screen-changed is NOT
    * emitted for the toplevel the first time!
@@ -2823,6 +2872,9 @@ mdi_screen_added_cb (TerminalMdiContainer *container,
   g_signal_connect (screen, "close-screen",
                     G_CALLBACK (screen_close_cb), window);
 
+  g_signal_connect (screen, "notify::bell-raised",
+                    G_CALLBACK (screen_bell_raised_window_cb), window);
+
   terminal_window_update_tabs_actions_sensitivity (window);
   terminal_window_update_search_sensitivity (screen, window);
   terminal_window_update_paste_sensitivity (window);
@@ -2905,6 +2957,10 @@ mdi_screen_removed_cb (TerminalMdiContainer *container,
 
   g_signal_handlers_disconnect_by_func (screen,
                                         G_CALLBACK (screen_close_cb),
+                                        window);
+
+  g_signal_handlers_disconnect_by_func (screen,
+                                        G_CALLBACK (screen_bell_raised_window_cb),
                                         window);
 
   /* We already got a switch-page signal whose handler sets the active tab to the
