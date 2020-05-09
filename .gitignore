@@ -1,3 +1,4 @@
+#generated files from autogen.sh
 ABOUT-NLS
 Makefile
 Makefile.in
@@ -79,3 +80,11 @@ src/Makefile.in
 src/terminal-version.h
 stamp-h1
 test-driver
+# generated files from make
+po/*.gmo
+org.gnome.Terminal.Nautilus.metainfo.xml
+org.gnome.Terminal.appdata.xml
+org.gnome.Terminal.desktop
+po/gnome-terminal.pot
+po/remove-potcdate.sed
+po/stamp-po
